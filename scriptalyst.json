@@ -1,0 +1,16 @@
+{
+	"autorun": {
+		"shared": [
+			"reportfu/sh_reportfu.lua"
+		],
+		"server": [
+			"reportfu/sv_reportfu.lua"
+		],
+		"client": [
+			"reportfu/cl_reportfu.lua"
+		]
+	},
+	"require": {
+		"adamdburton/articulate": "1.*"
+	}
+}
