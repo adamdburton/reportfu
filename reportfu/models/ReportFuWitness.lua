@@ -5,11 +5,11 @@ class 'ReportFuWitness' extends 'ArticulateModel' is {
 	end,
 		
 	public 'scopePotential' = function(self, query)
-		query:where('confirmed', 0)
+		query:where('accepted', 0)
 	end,
 		
 	public 'scopeConfirmed' = function(self, query)
-		query:where('confirmed', 1)
+		query:where('accepted', 1)
 	end
 	
 }

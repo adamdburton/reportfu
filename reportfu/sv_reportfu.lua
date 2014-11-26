@@ -2,71 +2,8 @@ ReportFu.sessionPlayers = {}
 
 -- Utils and functions
 
-function ReportFu:LoadReport(data)
-	local REPORT = {}
-	REPORT.__index = REPORT
-	
-	REPORT.Data = data or {}
-	
-	function REPORT:GetReporter()
-		return self.Data.ReporterSteamID64
-	end
-	
-	function REPORT:GetReporterAsPlayer()
-		for _, ply in pairs(player.GetAll()) do
-			if ply:SteamID64() == self.Data.ReporterSteamID64 then
-				return ply
-			end
-		end
-	end
-	
-	function REPORT:GetReported()
-		return self.Data.ReportedSteamID64
-	end
-	
-	function REPORT:GetReportedAsPlayer()
-		for _, ply in pairs(player.GetAll()) do
-			if ply:SteamID64() == self.Data.ReportedSteamID64 then
-				return ply
-			end
-		end
-	end
-	
-	function REPORT:Save()
-		file.Write('report.txt', util.TableToJSON(self.Data))
-	end
-	
-	function REPORT:IsAcceptingWitnesses()
-		return self.Data.PotentialWitnesses and #self.Data.PotentialWitnesses > 0
-	end
-	
-	function REPORT:IsValidWitness(ply)
-		return (self.Data.PotentialWitnesses and self.Data.PotentialWitnesses[ply:SteamID64()]) and true or false
-	end
-	
-	function REPORT:AddWitness(ply, accepted, statement)
-		self.Data.PotentialWitnesses[ply:SteamID64()] = nil
-		
-		self.Data.Witnesses[ply:SteamID64()] = {
-			Accepted = accepted,
-			Statement = statement,
-			Given = os.time()
-		}
-	end
-	
-	return REPORT
-end
-
-function ReportFu:GetReportByID(id)
-	local json = file.Read('report.txt')
-	
-	if not json then return end
-	
-	local data = util.JSONToTable(json)
-	
-	if not data then return end
-	
-	return self:LoadReport(data)
+function ReportFu:LoadReport(id)
+	return new ('ReporFuReport'):find(id)
 end
 
 function ReportFu:IsValidReporter(ply, reportedPlayerSteamID64)
@@ -88,7 +25,11 @@ function ReportFu:IsValidReporter(ply, reportedPlayerSteamID64)
 	return true
 end
 
--- Net hooks
+--[[
+	Net hooks
+]]--
+
+-- Player reported player
 
 net.Receive('rf_report', function(len, ply)
 	local reportedPlayerSteamID64 = net.ReadString() or ''
@@ -129,24 +70,28 @@ net.Receive('rf_report', function(len, ply)
 		end
 	end
 	
+	-- Sne the details of the report back to the user
+	
 	net.Start('rf_reported')
 		net.WriteString(ReportFu.sessionPlayers[reportedPlayerSteamID64].Nick)
 		net.WriteTable(witnesses)
 	net.Send(ply)
 end)
 
+-- Player sent witness report
+
 net.Receive('rf_witness', function(len, ply)
-	local REPORT = ReportFu:GetReportByID(net.ReadInt(32) or 0)
+	local report = ReportFu:LoadReport(net.ReadInt(32) or 0)
 	local accepted = net.ReadBit() and true or false
 	local statement = net.ReadString() or ''
 	
 	-- Do a little sanity checking
 	
-	if not REPORT then return end
-	if not REPORT:IsAcceptingWitnesses() then return end
-	if not REPORT:IsValidWitness(ply) then return end
+	if not report then return end
+	if not report:IsAcceptingWitnesses() then return end
+	if not report:IsValidWitness(ply) then return end
 	
-	REPORT:AddWitness(ply, accepted, statement)
+	REPORT:AddWitnessStatement(ply, accepted, statement)
 end)
 
 net.Receive('rf_request_report', function(len, ply)
