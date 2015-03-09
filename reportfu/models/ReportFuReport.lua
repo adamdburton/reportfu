@@ -1,11 +1,11 @@
 class 'ReportFuReport' extends 'ArticulateModel' is {
 	
 	public 'reporter' = function(self)
-		return self:hasOne('ReportFuUser', 'reporter_id')
+		return self:belongsTo('ReportFuUser', 'reporter_id')
 	end,
 		
 	public 'reported' = function(self)
-		return self:hasOne('ReportFuUser', 'reported_id')
+		return self:belongsTo('ReportFuUser', 'reported_id')
 	end,
 	
 	public 'witnesses' = function(self)

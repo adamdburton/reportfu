@@ -50,11 +50,10 @@ net.Receive('rf_report', function(len, ply)
 		end
 	end
 	
-	local REPORT = ReportFu:GenerateReport({
-		Created = os.time(),
-		Reporter = ply:SteamID64(),
-		Reported = reportedPlayerSteamID64,
-		Reason = reportReason,
+	local report = ReportFuReport:Create({
+		reporter_id = ply:SteamID64(),
+		reported_id = reportedPlayerSteamID64,
+		reason = reportReason,
 		PotentialWitnesses = potentialWitnesses,
 		Witnesses = {}
 	})
@@ -73,6 +72,7 @@ net.Receive('rf_report', function(len, ply)
 	-- Sne the details of the report back to the user
 	
 	net.Start('rf_reported')
+		net.WriteInt(report.id, 32)
 		net.WriteString(ReportFu.sessionPlayers[reportedPlayerSteamID64].Nick)
 		net.WriteTable(witnesses)
 	net.Send(ply)
